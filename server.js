@@ -1,60 +1,29 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const axios = require('axios');
-const cors = require('cors');
-
-const app = express();
-const port = 5001;
-
-// Middleware
-app.use(cors());
-app.use(bodyParser.json());
-
-const AI_SERVER_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyClhi1RbxDSOePDeLRlBmGSQ_JKdwD9kCk';
-
-// Lista de artículos
-const articles = [
-  {
-    id: 1,
-    title: "Taladro Inalámbrico",
-    description: "Taladro inalámbrico de 210V con dos baterías y maletín de transporte.",
-    price: "199.99",
-   // image: require("./assets/taladro.png")
-  },
-  {
-    id: 2,
-    title: "Juego de Destornilladores",
-    description: "Juego de destornilladores de precisión de 12 piezas.",
-    price: "19.99",
-    image: "https://example.com/destornilladores.jpg"
-  },
-  {
-    id: 3,
-    title: "Sierra Circular",
-    description: "Sierra circular de 1500W con hoja de 185 mm.",
-    price: "79.99",
-    image: "https://example.com/sierra.jpg"
-  }
-];
-
 app.post('/chat', async (req, res) => {
   const { prompt, userDetails } = req.body;
 
   try {
     console.log('Prompt recibido:', prompt);
 
-    // Filtrar artículos relevantes basados en el prompt del usuario
+    // Usar compromise para extraer palabras clave
+    const doc = nlp(prompt);
+    const keywords = doc.match('#Noun').out('array');
+    console.log('Palabras clave extraídas:', keywords);
+
+    // Filtrar artículos relevantes basados en las palabras clave
     const relevantArticles = articles.filter(article => 
-      article.title.toLowerCase().includes(prompt.toLowerCase()) || 
-      article.description.toLowerCase().includes(prompt.toLowerCase())
+      keywords.some(keyword => 
+        article.title.toLowerCase().includes(keyword.toLowerCase()) || 
+        article.description.toLowerCase().includes(keyword.toLowerCase())
+      )
     );
 
+    let botMessages = [];
+
     if (relevantArticles.length > 0) {
-      const botMessages = relevantArticles.map(article => ({
+      botMessages = relevantArticles.map(article => ({
         text: `Te sugerimos: ${article.title} - ${article.description} - Precio: ${article.price}`,
         image: article.image
       }));
-      res.json({ messages: botMessages });
     } else {
       // Si no hay artículos relevantes, enviar el mensaje a la AI
       const aiResponse = await axios.post(AI_SERVER_URL, {
@@ -75,21 +44,31 @@ app.post('/chat', async (req, res) => {
         }
       }
 
-      res.json({ messages: [{ text: botResponse }] });
+      botMessages.push({ text: botResponse });
+
+      // Verificar si la respuesta del AI contiene palabras clave relevantes
+      const aiKeywords = nlp(botResponse).match('#Noun').out('array');
+      const additionalArticles = articles.filter(article =>
+        aiKeywords.some(keyword =>
+          article.title.toLowerCase().includes(keyword.toLowerCase()) ||
+          article.description.toLowerCase().includes(keyword.toLowerCase())
+        )
+      );
+
+      if (additionalArticles.length > 0) {
+        additionalArticles.forEach(article => {
+          botMessages.push({
+            text: `Además, te sugerimos: ${article.title} - ${article.description} - Precio: ${article.price}`,
+            image: article.image
+          });
+        });
+      }
     }
+
+    res.json({ messages: botMessages });
 
   } catch (error) {
     console.error('Error en la solicitud:', error);
     res.status(500).json({ error: 'Error en el servidor al procesar la solicitud' });
   }
-});
-
-// Ruta para obtener artículos
-app.get('/articles', (req, res) => {
-  res.json(articles);
-});
-
-// Iniciar el servidor
-app.listen(port, () => {
-  console.log(`Servidor corriendo en http://localhost:${port}`);
 });

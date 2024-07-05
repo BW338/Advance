@@ -12,6 +12,7 @@ function App() {
   const [userLocation, setUserLocation] = useState('');
   const [articles, setArticles] = useState([]);
   const scrollViewRef = useRef();
+  const articleIdRef = useRef(1); // Referencia para generar IDs únicos para los artículos
 
   const handleSend = async () => {
     if (input.trim() === '') return;
@@ -31,19 +32,26 @@ function App() {
         setMessages((prevMessages) => [...prevMessages, { sender: 'bot', text: msg.text, image: msg.image }]);
       });
   
-      // Enviar datos a Google Tag Manager (GTM)
-      window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push({
-        event: 'userMessageSent',
-        message: input, // Envía el mensaje del usuario como parte de los datos
-      });
-  
       // Obtener artículos sugeridos
       const relevantArticles = await axios.get(`${SERVER_URL}/articles`);
-      setArticles(relevantArticles.data.filter(article => 
+
+      // Filtrar artículos relevantes en el cliente
+      const filteredArticles = relevantArticles.data.filter(article => 
         article.title.toLowerCase().includes(input.toLowerCase()) || 
         article.description.toLowerCase().includes(input.toLowerCase())
-      ));
+      );
+
+      // Asignar IDs únicos a los artículos filtrados
+      const articlesWithIds = filteredArticles.map(article => ({
+        ...article,
+        id: articleIdRef.current++
+      }));
+
+      // Actualizar el estado de los artículos
+      setArticles(prevArticles => [
+        ...prevArticles,
+        ...articlesWithIds
+      ]);
   
     } catch (error) {
       console.error('Error al enviar solicitud al servidor:', error);
@@ -55,8 +63,6 @@ function App() {
     }, 100);
   };
   
-  
-
   // Función para manejar los detalles del usuario y enviarlos a GTM
   const handleUserDetails = () => {
     // Leer cookies y establecer estados correspondientes
@@ -90,44 +96,50 @@ function App() {
     handleUserDetails();
   }, []);
 
+  const handleRemoveArticle = (id) => {
+    setArticles(articles.filter(article => article.id !== id));
+  };
+
   return (
     <div className="container">
       <div className="chatBox">
-        {messages.map((msg, index) => (
-          <div key={index} className={msg.sender === 'user' ? 'userMessage' : 'botMessage'}>
-            <p className="messageText">{msg.text}</p>
-            {msg.image && <img src={msg.image} alt="Artículo sugerido" className="messageImage" />}
-          </div>
-        ))}
-        <div ref={scrollViewRef}></div>
-      </div>
-      <div className="inputContainer">
-        <input
-          className="input"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Escribe tu mensaje..."
-          onKeyDown={(e) => e.key === 'Enter' && handleSend()} // Para enviar el mensaje al presionar "Enter"
-        />
-        <button className="sendButton" onClick={handleSend}>
-          Enviar
-        </button>
+        <div className="messagesContainer">
+          {messages.map((msg, index) => (
+            <div key={index} className={msg.sender === 'user' ? 'userMessage' : 'botMessage'}>
+              <p className="messageText">{msg.text}</p>
+              {msg.image && <img src={msg.image} alt="Artículo sugerido" className="messageImage" />}
+            </div>
+          ))}
+          <div ref={scrollViewRef}></div>
+        </div>
+        <div className="inputContainer">
+          <input
+            className="input"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Escribe tu mensaje..."
+            onKeyDown={(e) => e.key === 'Enter' && handleSend()} // Para enviar el mensaje al presionar "Enter"
+          />
+          <button className="sendButton" onClick={handleSend}>
+            Enviar
+          </button>
+        </div>
       </div>
       <div className="articlesContainer">
         {articles.map((article) => (
           <div key={article.id} className="articleCard">
+            <button className="closeButton" onClick={() => handleRemoveArticle(article.id)}>x</button>
             <img src={article.image} alt={article.title} className="articleImage" />
-            <h3>{article.title}</h3>
-            <p>{article.description}</p>
-            <p className="articlePrice">${article.price}</p>
+            <div className="articleDetails">
+              <h3>{article.title}</h3>
+              <p>{article.description}</p>
+              <p className="articlePrice">${article.price}</p>
+            </div>
           </div>
         ))}
       </div>
     </div>
   );
-  
-  
-  
 }
 
 export default App;

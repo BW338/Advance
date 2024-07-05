@@ -7,9 +7,10 @@
   pointer-events: none;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
+/* Mobile view */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
   }
 }
 
@@ -38,65 +39,117 @@
 }
 .container {
   display: flex;
-  flex-direction: column;
   height: 100vh;
-  background-color: #fff;
-  font-family: Arial, sans-serif;
 }
 
 .chatBox {
-  flex: 1;
+  flex: 2;
+  display: flex;
+  flex-direction: column;
   padding: 10px;
-  margin-top: 30px;
-  margin-bottom: 10px;
-  background-color: #f0f8ff;
+  border-right: 1px solid #ccc;
   overflow-y: auto;
-}
-
-.userMessage {
-  align-self: flex-end;
-  background-color: #dcf8c6;
-  border-radius: 12px;
-  margin: 5px 0;
-  padding: 10px;
-}
-
-.botMessage {
-  align-self: flex-start;
-  background-color: #ececec;
-  border-radius: 10px;
-  margin: 5px 0;
-  padding: 10px;
-}
-
-.messageText {
-  font-size: 16px;
 }
 
 .inputContainer {
   display: flex;
-  border-top: 1px solid #ddd;
   padding: 10px;
+  border-top: 1px solid #ccc;
 }
 
 .input {
   flex: 1;
-  border: 1px solid #ddd;
-  border-radius: 10px;
   padding: 10px;
-  margin-right: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 
 .sendButton {
-  background-color: #007bff;
-  border-radius: 10px;
   padding: 10px 20px;
+  margin-left: 10px;
+  background-color: #007bff;
   color: #fff;
   border: none;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 16px;
 }
 
 .sendButton:hover {
   background-color: #0056b3;
 }
+
+.messagesContainer {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.userMessage,
+.botMessage {
+  margin-bottom: 10px;
+}
+
+.userMessage {
+  text-align: right;
+}
+
+.botMessage {
+  text-align: left;
+}
+
+.messageText {
+  display: inline-block;
+  padding: 10px;
+  border-radius: 8px;
+  background-color: #f1f1f1;
+}
+
+.messageImage {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  display: block;
+  margin: 10px auto;
+}
+
+.articlesContainer {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+  border-left: 1px solid #ccc;
+  display: flex;
+  flex-direction: column;
+}
+
+.articleCard {
+  position: relative;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.articleImage {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+}
+
+.articlePrice {
+  font-weight: bold;
+}
+
+.closeButton {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: red;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
