@@ -35,7 +35,7 @@ app.post('/chat', async (req, res) => {
     console.log('Artículos relevantes encontrados:', matchedTitles);
 
     const botMessages = [{ text: botResponse }];
-    if (matchedTitles.length > 0) {
+   {/*  if (matchedTitles.length > 0) {
       matchedTitles.forEach(article => {
         botMessages.push({
           text: `Te sugerimos: ${article.title} - ${article.description} - Precio: ${article.price}`,
@@ -45,13 +45,17 @@ app.post('/chat', async (req, res) => {
     } else {
       botMessages.push({ text: 'No se encontraron artículos relevantes.' });
     }
-
-    res.json({ messages: botMessages });
+*/}
+    res.json({ messages: botMessages, articles: matchedTitles });
 
   } catch (error) {
     console.error('Error en la solicitud:', error);
     res.status(500).json({ error: 'Error en el servidor al procesar la solicitud' });
   }
+});
+
+app.get('/articles', (req, res) => {
+  res.json(articles);
 });
 
 app.listen(5001, () => {

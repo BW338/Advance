@@ -2,6 +2,7 @@
 
 .container {
   display: flex;
+  flex-direction: column;
   height: 100vh;
 }
 
@@ -75,42 +76,30 @@
 }
 
 .articlesContainer {
-  flex: 1;
-  padding: 10px;
-  overflow-y: auto;
-  border-left: 1px solid #ccc;
   display: flex;
-  flex-direction: column;
+  overflow-y: auto;
+  border-bottom: 1px solid #ccc;
+  flex-direction: row;
 }
 
 .articleCard {
-  margin-bottom: 16px;
+  margin: 0 10px;
 }
 
-/* Mobile view adjustments */
-@media (max-width: 768px) {
+@media (min-width: 768px) {
   .container {
-    flex-direction: column;
-  }
-
-  .chatBox {
-    flex: 1;
+    flex-direction: row;
   }
 
   .articlesContainer {
-    flex-direction: row;
-    overflow-x: auto;
-    border-left: none;
-    border-top: 1px solid #ccc;
+    flex-direction: column;
+    overflow-y: auto;
+    border-left: 1px solid #ccc;
+    border-bottom: none;
   }
 
-  .articleCard {
-    flex: 0 0 auto;
-    width: 200px;
-    margin: 10px;
-  }
-
-  .articleImage {
-    height: 100px;
+  .chatBox {
+    flex: 2;
+    border-right: none;
   }
 }
