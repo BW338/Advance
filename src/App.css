@@ -1,42 +1,5 @@
-.App {
-  text-align: center;
-}
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
 
-/* Mobile view */
-@media (max-width: 768px) {
-  .container {
-    flex-direction: column;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
 .container {
   display: flex;
   height: 100vh;
@@ -121,35 +84,33 @@
 }
 
 .articleCard {
-  position: relative;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 10px;
-  margin-bottom: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  margin-bottom: 16px;
 }
 
-.articleImage {
-  width: 100px;
-  height: 100px;
-  object-fit: cover;
-}
+/* Mobile view adjustments */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
 
-.articlePrice {
-  font-weight: bold;
-}
+  .chatBox {
+    flex: 1;
+  }
 
-.closeButton {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  background-color: red;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  padding: 2px 6px;
-}
+  .articlesContainer {
+    flex-direction: row;
+    overflow-x: auto;
+    border-left: none;
+    border-top: 1px solid #ccc;
+  }
 
+  .articleCard {
+    flex: 0 0 auto;
+    width: 200px;
+    margin: 10px;
+  }
+
+  .articleImage {
+    height: 100px;
+  }
+}

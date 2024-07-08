@@ -1,68 +1,49 @@
+const express = require('express');
+const bodyParser = require('body-parser');
+const axios = require('axios');
+const cors = require('cors');
+const articles = require('./articles');
+
+const app = express();
+const port = 5001;
+
+// Middleware
+app.use(cors());
+app.use(bodyParser.json());
+
+const AI_SERVER_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyClhi1RbxDSOePDeLRlBmGSQ_JKdwD9kCk';
+
+console.log('Títulos de los artículos:', articles.map(article => article.title));
+
 app.post('/chat', async (req, res) => {
-  const { prompt, userDetails } = req.body;
+  const { prompt } = req.body;
 
   try {
     console.log('Prompt recibido:', prompt);
 
-    // Usar compromise para extraer palabras clave
-    const doc = nlp(prompt);
-    const keywords = doc.match('#Noun').out('array');
-    console.log('Palabras clave extraídas:', keywords);
+    // Enviar mensaje a la IA
+    const aiResponse = await axios.post(AI_SERVER_URL, {
+      contents: [{ parts: [{ text: prompt }] }]
+    });
 
-    // Filtrar artículos relevantes basados en las palabras clave
-    const relevantArticles = articles.filter(article => 
-      keywords.some(keyword => 
-        article.title.toLowerCase().includes(keyword.toLowerCase()) || 
-        article.description.toLowerCase().includes(keyword.toLowerCase())
-      )
-    );
+    console.log('Respuesta de Google AI:', aiResponse.data);
+    const botResponse = aiResponse.data.candidates[0].content.parts[0].text.toLowerCase();
 
-    let botMessages = [];
+    // Verificar si algún título de artículo completo se menciona en la respuesta de la IA
+    const matchedTitles = articles.filter(article => botResponse.includes(article.title.toLowerCase()));
 
-    if (relevantArticles.length > 0) {
-      botMessages = relevantArticles.map(article => ({
-        text: `Te sugerimos: ${article.title} - ${article.description} - Precio: ${article.price}`,
-        image: article.image
-      }));
-    } else {
-      // Si no hay artículos relevantes, enviar el mensaje a la AI
-      const aiResponse = await axios.post(AI_SERVER_URL, {
-        contents: [{ parts: [{ text: prompt }] }]
-      });
+    console.log('Artículos relevantes encontrados:', matchedTitles);
 
-      console.log('Respuesta de Google AI:', aiResponse.data);
-      let botResponse = aiResponse.data.candidates[0].content.parts[0].text;
-
-      // Personaliza la respuesta basada en userDetails si están disponibles
-      if (userDetails) {
-        if (prompt.toLowerCase() === 'cómo me llamo?' && userDetails.name) {
-          botResponse = `Te llamas ${userDetails.name}.`;
-        } else if (prompt.toLowerCase() === 'dónde vivo?' && userDetails.location) {
-          botResponse = `Vives en ${userDetails.location}.`;
-        } else if (prompt.toLowerCase() === 'cuántos años tengo?' && userDetails.age) {
-          botResponse = `Tienes ${userDetails.age} años.`;
-        }
-      }
-
-      botMessages.push({ text: botResponse });
-
-      // Verificar si la respuesta del AI contiene palabras clave relevantes
-      const aiKeywords = nlp(botResponse).match('#Noun').out('array');
-      const additionalArticles = articles.filter(article =>
-        aiKeywords.some(keyword =>
-          article.title.toLowerCase().includes(keyword.toLowerCase()) ||
-          article.description.toLowerCase().includes(keyword.toLowerCase())
-        )
-      );
-
-      if (additionalArticles.length > 0) {
-        additionalArticles.forEach(article => {
-          botMessages.push({
-            text: `Además, te sugerimos: ${article.title} - ${article.description} - Precio: ${article.price}`,
-            image: article.image
-          });
+    const botMessages = [{ text: botResponse }];
+    if (matchedTitles.length > 0) {
+      matchedTitles.forEach(article => {
+        botMessages.push({
+          text: `Te sugerimos: ${article.title} - ${article.description} - Precio: ${article.price}`,
+          image: article.image
         });
-      }
+      });
+    } else {
+      botMessages.push({ text: 'No se encontraron artículos relevantes.' });
     }
 
     res.json({ messages: botMessages });
@@ -71,4 +52,8 @@ app.post('/chat', async (req, res) => {
     console.error('Error en la solicitud:', error);
     res.status(500).json({ error: 'Error en el servidor al procesar la solicitud' });
   }
+});
+
+app.listen(5001, () => {
+  console.log('Servidor escuchando en el puerto 5001');
 });

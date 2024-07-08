@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
+import { Card, CardContent, CardMedia, Typography, Button, IconButton, Box } from '@mui/material';
+import { Delete as DeleteIcon, ShoppingCart as ShoppingCartIcon } from '@mui/icons-material';
 import './App.css';
 
-const SERVER_URL = 'http://192.168.0.9:5001'; // Asegúrate de utilizar la IP correcta de tu servidor Node.js
+const SERVER_URL = 'http://192.168.0.9:5001'; 
 
 function App() {
   const [messages, setMessages] = useState([]);
@@ -12,60 +14,42 @@ function App() {
   const [userLocation, setUserLocation] = useState('');
   const [articles, setArticles] = useState([]);
   const scrollViewRef = useRef();
-  const articleIdRef = useRef(1); // Referencia para generar IDs únicos para los artículos
+
+  useEffect(() => {
+    handleUserDetails();
+    fetchArticles(); // Llama a la función para obtener artículos al cargar la página
+  }, []);
 
   const handleSend = async () => {
     if (input.trim() === '') return;
-  
+
     const userMessage = { sender: 'user', text: input };
-    setMessages((prevMessages) => [...prevMessages, userMessage]);
-    setInput(''); // Limpia el campo de entrada después de enviar el mensaje
-  
+    setMessages(prevMessages => [...prevMessages, userMessage]);
+    setInput('');
+
     try {
-      // Incluir el nombre del usuario en el mensaje enviado al servidor si está disponible
       const prompt = userName ? `${input} (Usuario: ${userName})` : input;
-  
-      // Enviar mensaje al servidor
+
       const response = await axios.post(`${SERVER_URL}/chat`, { prompt, userDetails: { name: userName, age: userAge, location: userLocation } });
-      
-      response.data.messages.forEach(msg => {
-        setMessages((prevMessages) => [...prevMessages, { sender: 'bot', text: msg.text, image: msg.image }]);
+
+      const botMessages = response.data.messages;
+
+      botMessages.forEach(msg => {
+        setMessages(prevMessages => [...prevMessages, { sender: 'bot', text: msg.text, image: msg.image }]);
       });
-  
-      // Obtener artículos sugeridos
-      const relevantArticles = await axios.get(`${SERVER_URL}/articles`);
 
-      // Filtrar artículos relevantes en el cliente
-      const filteredArticles = relevantArticles.data.filter(article => 
-        article.title.toLowerCase().includes(input.toLowerCase()) || 
-        article.description.toLowerCase().includes(input.toLowerCase())
-      );
+      fetchArticles(); // Actualiza la lista de artículos después de recibir los mensajes
 
-      // Asignar IDs únicos a los artículos filtrados
-      const articlesWithIds = filteredArticles.map(article => ({
-        ...article,
-        id: articleIdRef.current++
-      }));
-
-      // Actualizar el estado de los artículos
-      setArticles(prevArticles => [
-        ...prevArticles,
-        ...articlesWithIds
-      ]);
-  
     } catch (error) {
       console.error('Error al enviar solicitud al servidor:', error);
     }
-  
-    // Esperar un poco antes de hacer scroll al final
+
     setTimeout(() => {
       scrollViewRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   };
-  
-  // Función para manejar los detalles del usuario y enviarlos a GTM
+
   const handleUserDetails = () => {
-    // Leer cookies y establecer estados correspondientes
     const cookies = document.cookie.split(';').map(cookie => cookie.trim());
     cookies.forEach(cookie => {
       const [key, value] = cookie.split('=');
@@ -74,7 +58,6 @@ function App() {
       if (key.trim() === 'user_location') setUserLocation(value);
     });
 
-    // Enviar datos a GTM
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push({
       event: 'userDetails',
@@ -83,21 +66,30 @@ function App() {
       location: userLocation,
     });
 
-    // Manejar detalles del usuario para personalizar el mensaje
     if (userName) {
       const userMessage = `Hola ${userName}, ¿en qué puedo ayudarte?`;
       const botMessage = { sender: 'bot', text: userMessage };
-      setMessages((prevMessages) => [...prevMessages, botMessage]);
+      setMessages(prevMessages => [...prevMessages, botMessage]);
     }
   };
 
-  // Llamar a handleUserDetails cuando se monta el componente y cuando cambian los datos del usuario
-  useEffect(() => {
-    handleUserDetails();
-  }, []);
+  const fetchArticles = async () => {
+    try {
+      const response = await axios.get(`${SERVER_URL}/articles`);
+      setArticles(response.data); // Establece los artículos obtenidos del servidor
+    } catch (error) {
+      console.error('Error al obtener artículos del servidor:', error);
+    }
+  };
 
-  const handleRemoveArticle = (id) => {
-    setArticles(articles.filter(article => article.id !== id));
+  const handleAddToCart = (articleId) => {
+    // Implementa la lógica para agregar artículo al carrito
+    console.log(`Artículo ${articleId} agregado al carrito`);
+  };
+
+  const handleRemoveArticle = (articleId) => {
+    // Implementa la lógica para eliminar artículo de la lista
+    setArticles(prevArticles => prevArticles.filter(article => article.id !== articleId));
   };
 
   return (
@@ -117,25 +109,48 @@ function App() {
             className="input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Escribe tu mensaje..."
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()} // Para enviar el mensaje al presionar "Enter"
+            placeholder="Escribe algo..."
           />
-          <button className="sendButton" onClick={handleSend}>
-            Enviar
-          </button>
+          <button className="sendButton" onClick={handleSend}>Enviar</button>
         </div>
       </div>
       <div className="articlesContainer">
-        {articles.map((article) => (
-          <div key={article.id} className="articleCard">
-            <button className="closeButton" onClick={() => handleRemoveArticle(article.id)}>x</button>
-            <img src={article.image} alt={article.title} className="articleImage" />
-            <div className="articleDetails">
-              <h3>{article.title}</h3>
-              <p>{article.description}</p>
-              <p className="articlePrice">${article.price}</p>
-            </div>
-          </div>
+        {articles.map(article => (
+          <Card key={article.id} className="articleCard">
+            <CardMedia
+              component="img"
+              height="140"
+              image={article.image}
+              alt={article.title}
+            />
+            <CardContent>
+              <Typography variant="h6" component="div">
+                {article.title}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                ${article.price}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {article.freeShipping && 'Envío gratis'}
+              </Typography>
+            </CardContent>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', padding: '0 16px 16px 16px' }}>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<ShoppingCartIcon />}
+                onClick={() => handleAddToCart(article.id)}
+              >
+                Agregar al Carrito
+              </Button>
+              <IconButton
+                color="secondary"
+                onClick={() => handleRemoveArticle(article.id)}
+              >
+                <DeleteIcon />
+              </IconButton>
+            </Box>
+          </Card>
         ))}
       </div>
     </div>
