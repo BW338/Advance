@@ -1,24 +1,31 @@
-/* App.css */
-
 .container {
   display: flex;
   flex-direction: column;
   height: 100vh;
 }
 
+.appBar {
+  z-index: 1300; /* Make sure the AppBar is above other components */
+}
+
 .chatBox {
   flex: 2;
   display: flex;
   flex-direction: column;
-  padding: 10px;
-  border-right: 1px solid #ccc;
+  padding: 20px;
+  background-color: #f5f5f5;
   overflow-y: auto;
+}
+
+.messagesContainer {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 20px;
 }
 
 .inputContainer {
   display: flex;
-  padding: 10px;
-  border-top: 1px solid #ccc;
+  align-items: center;
 }
 
 .input {
@@ -26,113 +33,72 @@
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  margin-right: 10px;
 }
 
 .sendButton {
   padding: 10px 20px;
-  margin-left: 10px;
   background-color: #007bff;
-  color: #fff;
+  color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
 }
 
-.sendButton:hover {
-  background-color: #0056b3;
-}
-
-.messagesContainer {
-  flex: 1;
-  padding: 10px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-}
-
-.userMessage,
-.botMessage {
-  margin-bottom: 10px;
+.sendButton:disabled {
+  background-color: #ccc;
 }
 
 .userMessage {
-  align-self: flex-end;
-  background-color: #e0ffe0;
-  color: #004d00;
-  padding: 10px;
-  border-radius: 10px;
-  margin: 5px;
-  max-width: 80%;
-  word-wrap: break-word;
+  text-align: right;
+  margin-bottom: 10px;
+}
+
+.userMessage .messageText {
+  background-color: #DCF8C6; /* Fondo verde similar a WhatsApp */
+  color: #000000; /* Color de texto negro */
 }
 
 .botMessage {
   text-align: left;
-  padding: 10px;
-  border-radius: 10px;
-  background-color: #f1f1f1;
-  margin: 5px;
-  max-width: 80%;
-  word-wrap: break-word;
+  margin-bottom: 10px;
 }
 
 .messageText {
-  margin: 0;
+  display: inline-block;
+  padding: 10px;
+  border-radius: 10px;
+  background-color: #e0e0e0;
 }
 
 .messageImage {
-  width: 150px;
-  height: 150px;
-  object-fit: cover;
-  display: block;
-  margin: 10px auto;
+  max-width: 100%;
+  height: auto;
+  margin-top: 10px;
+  border-radius: 10px;
 }
 
 .articlesContainer {
-  display: flex;
-  overflow-y: auto;
-  border-bottom: 1px solid #ccc;
-  flex-direction: row;
+  flex: 1;
+  padding: 20px;
+  background-color: #ffffff;
+  overflow-x: auto; /* Enable horizontal scroll for mobile devices */
 }
 
 .articleCard {
-  margin: 0 10px;
+  min-width: 250px;
 }
 
-.articlesContainer {
-  flex-direction: column;
-  overflow-y: auto;
-  border-left: 1px solid #ccc;
-  border-bottom: none;
-}
-
-.chatBox {
-  flex: 2;
-  border-right: none;
-}
-
-.fade-enter {
-  opacity: 0;
-  transform: translateY(20px);
-}
-
-.fade-enter-active {
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 500ms, transform 500ms;
-}
-
-.fade-exit {
-  opacity: 1;
-}
-
-.fade-exit-active {
-  opacity: 0;
-  transition: opacity 500ms;
-}
-
-@media (min-width: 768px) {
-  .container {
+@media (max-width: 768px) {
+  .articlesContainer {
+    display: flex;
     flex-direction: row;
+    overflow-x: auto;
+    padding: 10px;
+  }
+
+  .articleCard {
+    min-width: 300px;
+    margin-right: 10px;
   }
 }

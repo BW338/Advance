@@ -2,7 +2,10 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
 const cors = require('cors');
-const articles = require('./articles');
+const hardwareStore = require('./hardwareStore');
+const constructionMaterials = require('./constructionMaterials');
+const metalItems = require('./metalItems');
+const services = require('./services');
 
 const app = express();
 const port = 5001;
@@ -12,8 +15,6 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const AI_SERVER_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyClhi1RbxDSOePDeLRlBmGSQ_JKdwD9kCk';
-
-console.log('Títulos de los artículos:', articles.map(article => article.title));
 
 app.post('/chat', async (req, res) => {
   const { prompt } = req.body;
@@ -29,13 +30,14 @@ app.post('/chat', async (req, res) => {
     console.log('Respuesta de Google AI:', aiResponse.data);
     const botResponse = aiResponse.data.candidates[0].content.parts[0].text.toLowerCase();
 
-    // Verificar si algún título de artículo completo se menciona en la respuesta de la IA
-    const matchedTitles = articles.filter(article => botResponse.includes(article.title.toLowerCase()));
+    // Combinar todos los artículos en un solo array
+    const allArticles = [...hardwareStore, ...constructionMaterials, ...metalItems, ...services];
+    const matchedTitles = allArticles.filter(article => botResponse.includes(article.title.toLowerCase()));
 
     console.log('Artículos relevantes encontrados:', matchedTitles);
 
     const botMessages = [{ text: botResponse }];
-   {/*  if (matchedTitles.length > 0) {
+    if (matchedTitles.length > 0) {
       matchedTitles.forEach(article => {
         botMessages.push({
           text: `Te sugerimos: ${article.title} - ${article.description} - Precio: ${article.price}`,
@@ -45,7 +47,7 @@ app.post('/chat', async (req, res) => {
     } else {
       botMessages.push({ text: 'No se encontraron artículos relevantes.' });
     }
-*/}
+
     res.json({ messages: botMessages, articles: matchedTitles });
 
   } catch (error) {
@@ -54,8 +56,20 @@ app.post('/chat', async (req, res) => {
   }
 });
 
-app.get('/articles', (req, res) => {
-  res.json(articles);
+app.get('/hardwareStore', (req, res) => {
+  res.json(hardwareStore);
+});
+
+app.get('/constructionMaterials', (req, res) => {
+  res.json(constructionMaterials);
+});
+
+app.get('/metalItems', (req, res) => {
+  res.json(metalItems);
+});
+
+app.get('/services', (req, res) => {
+  res.json(services);
 });
 
 app.listen(5001, () => {

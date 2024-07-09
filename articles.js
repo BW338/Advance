@@ -206,7 +206,8 @@ const articles = [
     price: 150,
     image: 'https://example.com/taladro-percutor.jpg',
     seller: 'Ferretería XYZ'
-  }
+  },
+  
 ];
 
 module.exports = articles;

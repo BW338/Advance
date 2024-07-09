@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { Card, CardContent, CardMedia, Typography, Button, IconButton, Box, Grid } from '@mui/material';
+import { Card, CardContent, CardMedia, Typography, Button, IconButton, Box, Grid, AppBar, Toolbar, Badge } from '@mui/material';
 import { Delete as DeleteIcon, ShoppingCart as ShoppingCartIcon } from '@mui/icons-material';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+
 import './App.css';
 
 const SERVER_URL = 'http://192.168.0.9:5001';
@@ -13,6 +15,8 @@ function App() {
   const [userAge, setUserAge] = useState('');
   const [userLocation, setUserLocation] = useState('');
   const [relevantArticles, setRelevantArticles] = useState([]);
+  const [isInputDisabled, setIsInputDisabled] = useState(false);
+  const [cartItems, setCartItems] = useState([]);
   const scrollViewRef = useRef();
 
   useEffect(() => {
@@ -48,6 +52,10 @@ function App() {
     const userMessage = { sender: 'user', text: input };
     setMessages(prevMessages => [...prevMessages, userMessage]);
     setInput('');
+    setIsInputDisabled(true);
+
+    // Añadir el mensaje "procesando respuesta"
+    setMessages(prevMessages => [...prevMessages, { sender: 'bot', text: '...' }]);
 
     try {
       const conversationHistory = messages.map(msg => `${msg.sender}: ${msg.text}`).join('\n');
@@ -58,13 +66,20 @@ function App() {
       const botMessages = response.data.messages;
       setRelevantArticles(response.data.articles || []);
 
+      // Eliminar el mensaje "procesando respuesta"
+      setMessages(prevMessages => prevMessages.filter(msg => msg.text !== '...'));
+
       botMessages.forEach(msg => {
         setMessages(prevMessages => [...prevMessages, { sender: 'bot', text: msg.text, image: msg.image }]);
       });
 
     } catch (error) {
       console.error('Error al enviar solicitud al servidor:', error);
+      // Eliminar el mensaje "procesando respuesta" en caso de error
+      setMessages(prevMessages => prevMessages.filter(msg => msg.text !== 'Procesando respuesta...'));
     }
+
+    setIsInputDisabled(false);
 
     setTimeout(() => {
       scrollViewRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -95,9 +110,8 @@ function App() {
     }
   };
 
-  const handleAddToCart = (articleId) => {
-    // Implementa la lógica para agregar artículo al carrito
-    console.log(`Artículo ${articleId} agregado al carrito`);
+  const handleAddToCart = (article) => {
+    setCartItems(prevItems => [...prevItems, article]);
   };
 
   const handleRemoveArticle = (articleId) => {
@@ -106,39 +120,57 @@ function App() {
   };
 
   return (
-    <div className="container">
-      <div className="chatBox">
-        <div className="messagesContainer">
-          {messages.map((msg, index) => (
-            <div key={index} className={msg.sender === 'user' ? 'userMessage' : 'botMessage'}>
-              <p className="messageText">{msg.text}</p>
-              {msg.image && <img src={msg.image} alt="Artículo sugerido" className="messageImage" />}
-            </div>
-          ))}
-          <div ref={scrollViewRef}></div>
-        </div>
-        <div className="inputContainer">
-          <input
-            className="input"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Escribe algo..."
-          />
-          <button className="sendButton" onClick={handleSend}>Enviar</button>
-        </div>
-      </div>
-      <div className="articlesContainer">
-        {relevantArticles.length > 0 ? (
-          <Box sx={{ overflowX: 'auto', overflowY: { xs: 'initial', md: 'auto' } }}>
-            <Grid container spacing={2} sx={{ display: 'flex', flexWrap: 'nowrap', flexDirection: { xs: 'row', md: 'column' } }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+            AI-Commerce
+          </Typography>
+          <IconButton color="inherit">
+            <Badge badgeContent={4} color="error">
+              <NotificationsIcon />
+            </Badge>
+          </IconButton>
+          <IconButton color="inherit">
+            <Badge badgeContent={cartItems.length} color="error">
+              <ShoppingCartIcon />
+            </Badge>
+          </IconButton>
+        </Toolbar>
+      </AppBar>
+      <Box sx={{ display: 'flex', flex: 1, flexDirection: { xs: 'column', md: 'row' }, overflow: 'hidden' }}>
+        <Box className="chatBox" sx={{ flex: 2, display: 'flex', flexDirection: 'column', padding: '10px', borderRight: { xs: 'none', md: '1px solid #ccc' }, overflowY: 'auto' }}>
+          <div className="messagesContainer">
+            {messages.map((msg, index) => (
+              <div key={index} className={msg.sender === 'user' ? 'userMessage' : 'botMessage'}>
+                <p className="messageText">{msg.text}</p>
+                {msg.image && <img src={msg.image} alt="Artículo sugerido" className="messageImage" />}
+              </div>
+            ))}
+            <div ref={scrollViewRef}></div>
+          </div>
+          <div className="inputContainer">
+            <input
+              className="input"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+              placeholder="Escribe algo..."
+              disabled={isInputDisabled}
+            />
+            <button className="sendButton" onClick={handleSend} disabled={isInputDisabled}>Enviar</button>
+          </div>
+        </Box>
+        <Box className="articlesContainer" sx={{ flex: 1, overflowX: { xs: 'auto', md: 'hidden' }, overflowY: { xs: 'hidden', md: 'auto' }, padding: '10px' }}>
+          {relevantArticles.length > 0 ? (
+            <Grid container spacing={2} sx={{ display: 'flex', flexWrap: { xs: 'nowrap', md: 'wrap' }, flexDirection: { xs: 'row', md: 'row' } }}>
               {relevantArticles.map(article => (
-                <Grid item key={article.id} xs={12} sm={6} md={4} lg={3} sx={{ minWidth: '300px' }}>
+                <Grid item key={article.id} xs={12} sm={6} md={6} lg={6} sx={{ minWidth: { xs: '300px', md: 'auto' } }}>
                   <Card className="articleCard">
                     <CardMedia
                       component="img"
                       height="140"
                       image={'https://images.adsttc.com/media/images/638a/2c19/026c/6a01/70fd/b28f/large_jpg/guia-de-equipamiento-para-la-construccion-herramientas-equipos-y-maquinarias_30.jpg?1669999681'}
-                      // image={article.image}
                       alt={article.title}
                     />
                     <CardContent>
@@ -160,7 +192,7 @@ function App() {
                         variant="contained"
                         color="primary"
                         startIcon={<ShoppingCartIcon />}
-                        onClick={() => handleAddToCart(article.id)}
+                        onClick={() => handleAddToCart(article)}
                       >
                         Agregar al Carrito
                       </Button>
@@ -175,14 +207,14 @@ function App() {
                 </Grid>
               ))}
             </Grid>
-          </Box>
-        ) : (
-          <Typography variant="body2" color="text.secondary">
-            No se encontraron artículos relevantes.
-          </Typography>
-        )}
-      </div>
-    </div>
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              No se encontraron artículos relevantes.
+            </Typography>
+          )}
+        </Box>
+      </Box>
+    </Box>
   );
 }
 
