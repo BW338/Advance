@@ -1,4 +1,4 @@
-
+/* App.css */
 
 .container {
   display: flex;
@@ -44,7 +44,10 @@
 
 .messagesContainer {
   flex: 1;
+  padding: 10px;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .userMessage,
@@ -53,18 +56,28 @@
 }
 
 .userMessage {
-  text-align: right;
+  align-self: flex-end;
+  background-color: #e0ffe0;
+  color: #004d00;
+  padding: 10px;
+  border-radius: 10px;
+  margin: 5px;
+  max-width: 80%;
+  word-wrap: break-word;
 }
 
 .botMessage {
   text-align: left;
+  padding: 10px;
+  border-radius: 10px;
+  background-color: #f1f1f1;
+  margin: 5px;
+  max-width: 80%;
+  word-wrap: break-word;
 }
 
 .messageText {
-  display: inline-block;
-  padding: 10px;
-  border-radius: 8px;
-  background-color: #f1f1f1;
+  margin: 0;
 }
 
 .messageImage {
@@ -86,20 +99,40 @@
   margin: 0 10px;
 }
 
+.articlesContainer {
+  flex-direction: column;
+  overflow-y: auto;
+  border-left: 1px solid #ccc;
+  border-bottom: none;
+}
+
+.chatBox {
+  flex: 2;
+  border-right: none;
+}
+
+.fade-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.fade-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 500ms, transform 500ms;
+}
+
+.fade-exit {
+  opacity: 1;
+}
+
+.fade-exit-active {
+  opacity: 0;
+  transition: opacity 500ms;
+}
+
 @media (min-width: 768px) {
   .container {
     flex-direction: row;
-  }
-
-  .articlesContainer {
-    flex-direction: column;
-    overflow-y: auto;
-    border-left: 1px solid #ccc;
-    border-bottom: none;
-  }
-
-  .chatBox {
-    flex: 2;
-    border-right: none;
   }
 }
