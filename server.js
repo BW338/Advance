@@ -2,10 +2,10 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
 const cors = require('cors');
-const hardwareStore = require('./hardwareStore');
-const constructionMaterials = require('./constructionMaterials');
-const metalItems = require('./metalItems');
-const services = require('./services');
+const hardwareStore = require('./src/hardwareStore');
+const constructionMaterials = require('./src/constructionMaterials');
+const metalItems = require('./src/metalItems');
+const services = require('./src/services');
 
 const app = express();
 const port = 5001;
@@ -22,9 +22,12 @@ app.post('/chat', async (req, res) => {
   try {
     console.log('Prompt recibido:', prompt);
 
+    // Añadir un identificador al mensaje del usuario
+    const identifiedPrompt = `Usuario: ${prompt}`;
+
     // Enviar mensaje a la IA
     const aiResponse = await axios.post(AI_SERVER_URL, {
-      contents: [{ parts: [{ text: prompt }] }]
+      contents: [{ parts: [{ text: identifiedPrompt }] }]
     });
 
     console.log('Respuesta de Google AI:', aiResponse.data);
@@ -36,17 +39,10 @@ app.post('/chat', async (req, res) => {
 
     console.log('Artículos relevantes encontrados:', matchedTitles);
 
-    const botMessages = [{ text: botResponse }];
-    if (matchedTitles.length > 0) {
-      matchedTitles.forEach(article => {
-        botMessages.push({
-          text: `Te sugerimos: ${article.title} - ${article.description} - Precio: ${article.price}`,
-          image: article.image
-        });
-      });
-    } else {
-      botMessages.push({ text: 'No se encontraron artículos relevantes.' });
-    }
+    // Filtrar la respuesta para evitar incluir el identificador
+    const filteredBotResponse = botResponse.replace('usuario:', '').trim();
+
+    const botMessages = [{ text: filteredBotResponse }];
 
     res.json({ messages: botMessages, articles: matchedTitles });
 

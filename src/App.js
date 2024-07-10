@@ -1,9 +1,6 @@
-// src/App.js
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Box, Typography, IconButton } from '@mui/material';
-import { ShoppingCart as ShoppingCartIcon } from '@mui/icons-material';
+import { Box, Typography } from '@mui/material';
 
 import AppToolbar from './components/Toolbar';
 import ArticlesList from './components/ArticlesList';
@@ -36,7 +33,6 @@ function App() {
         (position) => {
           const { latitude, longitude } = position.coords;
           setUserLocation(`Lat: ${latitude}, Lon: ${longitude}`);
-          // Enviar la ubicación al servidor si es necesario
           console.log(`Ubicación del usuario: Lat: ${latitude}, Lon: ${longitude}`);
         },
         (error) => {
@@ -56,20 +52,14 @@ function App() {
     setInput('');
     setIsInputDisabled(true);
 
-    // Añadir el mensaje "procesando respuesta"
- //   setMessages(prevMessages => [...prevMessages, { sender: 'bot', text: '...' }]);
-
     try {
       const conversationHistory = messages.map(msg => `${msg.sender}: ${msg.text}`).join('\n');
-      const prompt = userName ? `${conversationHistory}\nUsuario: ${input}` : `${conversationHistory}\n${input}`;
+      const prompt = `${conversationHistory}\nUsuario: ${input}`;
 
       const response = await axios.post(`${SERVER_URL}/chat`, { prompt, userDetails: { name: userName, age: userAge, location: userLocation } });
 
       const botMessages = response.data.messages;
       setRelevantArticles(response.data.articles || []);
-
-      // Eliminar el mensaje "procesando respuesta"
-      setMessages(prevMessages => prevMessages.filter(msg => msg.text !== '...'));
 
       botMessages.forEach(msg => {
         setMessages(prevMessages => [...prevMessages, { sender: 'bot', text: msg.text, image: msg.image }]);
@@ -77,8 +67,6 @@ function App() {
 
     } catch (error) {
       console.error('Error al enviar solicitud al servidor:', error);
-      // Eliminar el mensaje "procesando respuesta" en caso de error
-      setMessages(prevMessages => prevMessages.filter(msg => msg.text !== 'Procesando respuesta...'));
     }
 
     setIsInputDisabled(false);
