@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, IconButton } from '@mui/material';
+import { ChevronLeft, ChevronRight, ExpandLess, ExpandMore } from '@mui/icons-material';
 
 import AppToolbar from './components/Toolbar';
 import ArticlesList from './components/ArticlesList';
@@ -21,6 +22,8 @@ function App() {
   const [isInputDisabled, setIsInputDisabled] = useState(false);
   const [cartItems, setCartItems] = useState([]);
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
+  const [isArticlesExpanded, setIsArticlesExpanded] = useState(false); // Estado para controlar la expansión
+  const scrollViewRef = useRef();
 
   useEffect(() => {
     handleUserDetails();
@@ -52,6 +55,9 @@ function App() {
     setInput('');
     setIsInputDisabled(true);
 
+    // Añadir el mensaje "procesando respuesta"
+  //  setMessages(prevMessages => [...prevMessages, { sender: 'bot', text: '...' }]);
+
     try {
       const conversationHistory = messages.map(msg => `${msg.sender}: ${msg.text}`).join('\n');
       const prompt = `${conversationHistory}\nUsuario: ${input}`;
@@ -61,15 +67,24 @@ function App() {
       const botMessages = response.data.messages;
       setRelevantArticles(response.data.articles || []);
 
+      // Eliminar el mensaje "procesando respuesta"
+      setMessages(prevMessages => prevMessages.filter(msg => msg.text !== '...'));
+
       botMessages.forEach(msg => {
         setMessages(prevMessages => [...prevMessages, { sender: 'bot', text: msg.text, image: msg.image }]);
       });
 
     } catch (error) {
       console.error('Error al enviar solicitud al servidor:', error);
+      // Eliminar el mensaje "procesando respuesta" en caso de error
+      setMessages(prevMessages => prevMessages.filter(msg => msg.text !== 'Procesando respuesta...'));
     }
 
     setIsInputDisabled(false);
+
+    setTimeout(() => {
+      scrollViewRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   };
 
   const handleUserDetails = () => {
@@ -112,6 +127,18 @@ function App() {
     setIsCartModalOpen(prevOpen => !prevOpen);
   };
 
+  const toggleArticlesExpanded = () => {
+    setIsArticlesExpanded(prevExpanded => !prevExpanded);
+  };
+
+  useEffect(() => {
+    if (relevantArticles.length > 0) {
+      setIsArticlesExpanded(true);
+    }
+  }, [relevantArticles]);
+
+  const articleContainerWidth = isArticlesExpanded ? { xs: '100%', md: 'calc(2 * 300px + 2 * 16px)' } : { xs: '100%', md: '2%' };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <AppToolbar cartItemsCount={cartItems.length} toggleCartModal={toggleCartModal} />
@@ -121,20 +148,39 @@ function App() {
           input={input}
           setInput={setInput}
           handleSend={handleSend}
+          inputStyle={{ fontSize: '6px' }} // Ajustar el tamaño de la fuente del input
           isInputDisabled={isInputDisabled}
+          scrollViewRef={scrollViewRef}
         />
-        <Box className="articlesContainer" sx={{ flex: 1, overflowX: { xs: 'auto', md: 'hidden' }, overflowY: { xs: 'hidden', md: 'auto' }, padding: '10px' }}>
-          {relevantArticles.length > 0 ? (
-            <ArticlesList
-              articles={relevantArticles}
-              handleAddToCart={handleAddToCart}
-              handleRemoveArticle={handleRemoveArticle}
-            />
-          ) : (
-            <Typography variant="body2" color="text.secondary">
-              No se encontraron artículos relevantes.
-            </Typography>
-          )}
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, position: 'relative', width: articleContainerWidth, height: isArticlesExpanded ? { xs: 'auto', md: '100%' } : { xs: '40px', md: '100%' }, transition: 'width 0.3s, height 1.0s' }}>
+          <IconButton
+            onClick={toggleArticlesExpanded}
+            sx={{
+              position: 'absolute',
+              top: { xs: 'auto', md: '50%' },
+              left: { xs: '50%', md: 0 },
+              bottom: { xs: 0, md: 'auto' },
+              transform: { xs: 'translateX(-50%)', md: 'translateY(-50%)' },
+              zIndex: 1
+            }}
+          >
+            {isArticlesExpanded ? (window.innerWidth < 960 ? <ExpandLess /> : <ChevronLeft />) : (window.innerWidth < 960 ? <ExpandMore /> : <ChevronRight />)}
+          </IconButton>
+          <Box ref={scrollViewRef} sx={{ width: '100%', height: '100%', overflowY: 'auto' }}>
+            <Box className="articlesContainer" sx={{ flex: 1, padding: '10px' }}>
+              {relevantArticles.length > 0 ? (
+                <ArticlesList
+                  articles={relevantArticles}
+                  handleAddToCart={handleAddToCart}
+                  handleRemoveArticle={handleRemoveArticle}
+                />
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  No se encontraron artículos relevantes.
+                </Typography>
+              )}
+            </Box>
+          </Box>
         </Box>
       </Box>
       <CartModal
